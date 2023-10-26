@@ -1,0 +1,18 @@
+[display 1]
+instrument = instrument 1
+channel = 6
+name = OK 1
+position = 442, 747
+name size = 50
+value size = 100
+value format = .5G
+
+[display 2]
+instrument = instrument 1
+channel = 2
+name = OK 2
+position = 584, 230
+name size = 50
+value size = 100
+value format = .2G
+
