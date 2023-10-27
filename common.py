@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox
 import configparser as cfg_parser
 
-
-DISPLAY_CFG_FILE = 'displays_config.txt'
+    # global variables
+display_cfg_file = 'displays_config.txt'
+    # constans
 INSTRUMENT_CFG_FILE = 'instruments_config.txt'
 
 

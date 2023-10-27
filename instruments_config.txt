@@ -1,3 +1,3 @@
-[instrument 1]
-type = MaxiGauge
+[maxigauge 1]
+type = MaxiGaugeInst      # name of class used inside of the program to take care about instrument - contorler
 port = COM3
