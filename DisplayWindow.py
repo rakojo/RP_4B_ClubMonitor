@@ -11,12 +11,13 @@ import common as cmn
 
 
 # =============================================================================
-# function DisplayWindow selects proper class to show the display window
+# function DisplayWindow select proper class to show the display window
+# and returns its instance.
 # =============================================================================    
-def diplay_window(display_id, obj_instrument):
+def diplay_window(display_id, obj_instrument,):
         # type of classes for display windows
     display_types = {'label' : LabelDisplay,
-                     'plot' : PlotDisplay}
+                     'plot'  : PlotDisplay}
 
     type =  str(cmn.read_cfg(cmn.display_cfg_file, display_id, 'type'))
 
@@ -37,6 +38,7 @@ class Display(QWidget):
     """
     def __init__(self, display_id, obj_instrument):
         super().__init__()
+        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint)      # Remove window frame
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint) # to be on the top above all windows
         self.display_id = display_id                  # string for identification in cfg file 
         self.get_value = obj_instrument.get_value     # reference to function returning values to display
@@ -44,19 +46,16 @@ class Display(QWidget):
         
         title = self.instrument_id + ' | CH' + str(self.channel)
         self.setWindowTitle(title)
-            # set window to be trasparent
-        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint)      # Remove window frame
-        # self.setStyleSheet("background: transparent;")              # Enable a transparent background
-        # self.setWindowOpacity(0.2)                                  # Set the window opacity (0.0 to 1.0)
 
         self.move(self.position[0], self.position[1])
         
         self.create_layout()
+        self.setWindowOpacity(self.opacity) 
 
             # set timer for calling reading and diplaying function
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_display)
-        self.timer.start(100)                              # 1000 milliseconds = 1 second
+        self.timer.start(self.period)                              # 1000 milliseconds = 1 second
 
 
         """
@@ -65,19 +64,19 @@ class Display(QWidget):
     def create_layout(self):
         pass
 
-
         """
         reads parameters like size and so from the configuretio text file    
         """
     def read_config(self):
         df = cmn.display_cfg_file
-        print("Display file name to read config for diplay: {}".format(df))
+        print("Display configuration file name: {}".format(df))
         self.instrument_id = str(cmn.read_cfg(df, self.display_id, 'instrument id'))
         self.name =          str(cmn.read_cfg(df, self.display_id, 'name'))
         self.channel =       int(cmn.read_cfg(df, self.display_id, 'channel'))
+        self.period =        int(cmn.read_cfg(df, self.display_id, 'period'))
         self.units =         str(cmn.read_cfg(df, self.display_id, 'units'))
         self.position =      tuple(int(x) for x in (cmn.read_cfg(df, self.display_id, 'position').split(',')))
-        self.name_size =     int(cmn.read_cfg(df, self.display_id, 'name size'))
+        self.opacity =       float(cmn.read_cfg(df, self.display_id, 'opacity'))
 
 
     def write_config(self):
@@ -91,7 +90,7 @@ class Display(QWidget):
         function run when display window is closed
         """
     def closeEvent(self, event):
-        print("Closing {} window !".format(self.name))
+        print("Closing {}!".format(self.name))
         self.write_config()
         self.timer.stop()                                   # stop the timer for display update
 
@@ -110,8 +109,12 @@ class Display(QWidget):
         pass
 
 
+    def keyPressEvent(self, event):
+        # if event.key() == Qt.Key_F1:
+        #     print("F1 pressed ...")
+        event.ignore()
+    
 
-  
 # =============================================================================
 # Class LabelDisplay 
 # Shows the values by labet text in the display window 
@@ -126,8 +129,8 @@ class LabelDisplay(Display):
         Creates GUI layout of the diplay window
         """
     def create_layout(self):
+        self.setStyleSheet(self.style) 
         layout = QVBoxLayout()
-
         layout_h = QHBoxLayout()
         self.lbl_name = QLabel(self.name)
         self.lbl_name.setFont(QtGui.QFont("Arial", self.name_size))
@@ -156,6 +159,8 @@ class LabelDisplay(Display):
         self.value_size =    int(cmn.read_cfg(df, self.display_id, 'value size'))
         self.units_size =    int(cmn.read_cfg(df, self.display_id, 'units size'))
         self.value_format =  str(cmn.read_cfg(df, self.display_id, 'value format'))
+        self.name_size =     int(cmn.read_cfg(df, self.display_id, 'name size'))
+        self.style =         str(cmn.read_cfg(df, self.display_id, 'style'))
 
 
         """
@@ -185,27 +190,23 @@ class PlotDisplay(Display):
     def create_layout(self):
         ## Create some widgets to be placed inside
         self.lbl_value = QLabel('enter text')
-        self.plot = pg.PlotWidget()
+        self.plot = pg.PlotWidget(background = self.bg_color)
 
         ## Create a grid layout to manage the widgets size and position
         layout = QGridLayout()
         self.setLayout(layout)
 
         ## Add widgets to the layout in their proper positions
-        layout.addWidget(self.lbl_value, 0, 0)  # button goes in upper-left
-        layout.addWidget(self.plot, 0, 1)  # plot goes on right side, spanning 3 rows
+        layout.addWidget(self.plot, 0, 0)  # plot goes on right side, spanning 3 rows
 
-        styles = {'color' : 'red', 'size': self.name_size + 'px'}
-        self.plot.setTitle(self.name, **styles)
-        styles = {'color':'red', 'font-size': self.axes_size + 'px'}
-        self.plot.setLabel('left', 'Pressure {}'.format(self.units), **styles)
-        self.plot.setLabel('bottom', 'Measurement no.', **styles)
+        self.plot.setTitle(self.name, **self.name_style)
+        self.plot.setLabel('left', 'Pressure {}'.format(self.units), **self.axes_style)
+        self.plot.setLabel('bottom', 'Measurement no.', **self.axes_style)
 
-        self.x = list(range(100))           # 100 time points
-        self.y = [0 for ii in range(100)]   # 100 data points = 0 for init
+        self.x = []     # No of measuremnt
+        self.y = []     # data points
 
-        pen = pg.mkPen(color=(255, 0, 0))
-        self.line =  self.plot.plot(self.x, self.y, pen=pen)
+        self.line =  self.plot.plot(self.x, self.y, pen=pg.mkPen(self.pen_style))
 
 
         """
@@ -214,8 +215,11 @@ class PlotDisplay(Display):
     def read_config(self):
         super().read_config()
         df = cmn.display_cfg_file
-        self.name_size =     str(cmn.read_cfg(df, self.display_id, 'name size'))
-        self.axes_size =     str(cmn.read_cfg(df, self.display_id, 'axes label size'))
+        self.name_style =    eval(cmn.read_cfg(df, self.display_id, 'name style'))  # eval should give dict
+        self.axes_style =    eval(cmn.read_cfg(df, self.display_id, 'axes style'))  # eval should give dict
+        self.pen_style =     eval(cmn.read_cfg(df, self.display_id, 'pen style'))  # eval should give dict
+        self.bg_color =      str(cmn.read_cfg(df, self.display_id, 'background'))  # eval should give dict
+        self.length =        int(cmn.read_cfg(df, self.display_id, 'length'))
         self.win_size =      tuple(int(x) for x in (cmn.read_cfg(df, self.display_id, 'size').split(',')))
 
 
@@ -231,13 +235,19 @@ class PlotDisplay(Display):
     def update_display(self):
         value = self.get_value(channel = self.channel)
 
-        self.x = self.x[1:]             # Remove the first y element.
-        self.x.append(self.x[-1] + 1)   # Add a new value 1 higher than the last.
 
-        self.y = self.y[1:]             # Remove the first
-        self.y.append( value)  # Add a new value.
+        if self.length <= len(self.x):
+            self.x = self.x[1:]             # Remove the first x element
+            self.y = self.y[1:]             # Remove the first x element
 
-        self.line.setData(self.x, self.y)  # Update the data.
+        if len(self.x) == 0:
+            self.x.append(0)
+        else:
+            self.x.append(self.x[-1] + 1)   # Add a new value 1 higher than the last.
+        
+        self.y.append(value)                # Add a new value.
+
+        self.line.setData(self.x, self.y)   # Update the data.
 
 
         """
@@ -245,3 +255,5 @@ class PlotDisplay(Display):
         """    
     def resizeEvent(self, event):
         self.win_size = (self.size().width(), self.size().height())        # update current position
+
+ 

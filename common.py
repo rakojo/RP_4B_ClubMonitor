@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMessageBox
 import configparser as cfg_parser
 
     # global variables
-display_cfg_file = 'displays_config.txt'
+display_cfg_file = 'displays_cfgs/displays_config_F1.txt'
     # constans
 INSTRUMENT_CFG_FILE = 'instruments_config.txt'
 

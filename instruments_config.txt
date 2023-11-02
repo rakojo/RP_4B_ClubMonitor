@@ -1,3 +1,10 @@
-[maxigauge 1]
-type = MaxiGaugeInst      # name of class used inside of the program to take care about instrument - contorler
+[maxigauge_1]
+type = MaxiGaugeInst    # name of class used inside of the program to take care about instrument - contorler
+#port = /dev/ttyUSB0
 port = COM3
+period = 250            # reading rate in miliseconds (100 means 10 times per second)
+save average = 4        # average this number of measurements before it saves the value
+channels = 6            # number of channels
+value format = .2G      # used to save the values
+dir = C:\Users\jozo\Desktop\PR4B\logs\        # directory where to save the files for log data
+#dir = /home/maxigauge/Desktop/logs/        # directory where to save the files for log data

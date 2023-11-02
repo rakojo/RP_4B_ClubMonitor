@@ -1,3 +1,24 @@
+# There are two types of objects and related config txt files :
+#                - INSTRUMENTS (contains instruments measuring quantities - pressure)
+#                - DISPLAYS (windows showing values measured by dyspaly)
+#
+# INSTRUMENTS : module Instruments and instruments_config.txt configuration file
+# - every INSTRUMENT has its controling class in Instruments module e.g. class "MaxiGaugeInst()"
+# - the name of class specified in the cfg. file should match one of the classes inside the inst. module
+# - the class aquire mmeasured values from instrument by "read_values()" function.
+#   The func. is trigered by a timer with a period 'period' parameter from inst. cfg. file. 
+#   Readed values are stored in the buffer.
+# - the class should have "get_value(self, channel)" fuction returnig the values from the buffer to a DISPLAY
+#
+# DISPLAYS: module DisplayWindow and one of the config file in "/displays_cfgs" directory"
+# - by the DISPLAYS, the way of showing the values to the screen is meant e.g. window with name and value label or 
+#   it can be a graph plot 
+# - the DISPLAY types are represented by ist clasess in "DisplaWindow" model e.g. "LabelDisplay" or "PlotDisplay"
+#   inheritig base functionality from the "class Display"
+# - by timer caling "update_display" function value is requsted from a proper INSTRUMENT class 
+#   by the its "get_value(self, channel)" fuction and show it in DISPLAY window
+
+
 from DisplayWindow import diplay_window
 from instruments import get_instrument_class
 
@@ -29,9 +50,6 @@ class MainWindow(QMainWindow):
          
             # set timer for reading instruments 
             # note.: not display just read and store, display then get values from inst obj by itself
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.read_instruments)
-        self.timer.start(100)                                  # in miliseconds
 
 
         """
@@ -75,31 +93,50 @@ class MainWindow(QMainWindow):
         self.displays.clear()      # claer list with all the references to display objects
 
 
-        """
-        Order instruments to aquire - mesure values 
-        """    
-    def read_instruments(self):
-        for inst in instruments:
-            instruments[inst].read_values()
-
-        
+      
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_F1:
+        if event.key() == Qt.Key_F10:
             file_dialog = QFileDialog()
             file_dialog.setFileMode(QFileDialog.ExistingFiles)
             if file_dialog.exec_():
                 file_path = file_dialog.selectedFiles()[0]
                 self.close_displays()
-                print("opend diplay: {}".format(file_path))
+                print("Opend diplay config. file: {}".format(file_path))
                 self.open_displays(file_path)
+
+        if event.key() == Qt.Key_F1:
+            file_path = 'displays_cfgs/displays_config_F1.txt'
+            self.close_displays()
+            print("Opend diplay config. file: {}".format(file_path))
+            self.open_displays(file_path)
+
+        if event.key() == Qt.Key_F2:
+            file_path = 'displays_cfgs/displays_config_F2.txt'
+            self.close_displays()
+            print("Opend diplay config. file: {}".format(file_path))
+            self.open_displays(file_path)
+
+        if event.key() == Qt.Key_F3:
+            file_path = 'displays_cfgs/displays_config_F3.txt'
+            self.close_displays()
+            print("Opend diplay config. file: {}".format(file_path))
+            self.open_displays(file_path)
+
+        if event.key() == Qt.Key_F4:
+            file_path = 'displays_cfgs/displays_config_F4.txt'
+            self.close_displays()
+            print("Opend diplay config. file: {}".format(file_path))
+            self.open_displays(file_path)
 
 
         """
         Called when app window is closed
         """
     def closeEvent(self, event):
-        self.timer.stop()
         self.close_displays()
+            # close all instruments
+        for inst in instruments:
+            instruments[inst].close()
 
 
 stylesheet = """

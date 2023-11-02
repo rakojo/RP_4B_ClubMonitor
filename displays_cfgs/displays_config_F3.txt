@@ -1,0 +1,39 @@
+[display_1]
+instrument id = maxigauge_1
+channel = 6
+period = 250
+type = label
+units = [mbar]
+name = OK 1
+position = 1046, 675
+name size = 50
+value size = 100
+units size = 30
+value format = .5G
+
+[display_2]
+instrument id = maxigauge_1
+channel = 1
+period = 250
+type = label
+units = [mbar]
+name = OK 2
+position = 132, 107
+name size = 50
+value size = 100
+units size = 30
+value format = .5G
+
+[plot_1]
+instrument id = maxigauge_1
+channel = 6
+period = 250
+type = plot
+length = 250
+units = [mbar]
+name = OK 1
+position = 222, 18
+size = 1606, 563
+name size = 50
+axes label size = 50
+
