@@ -1,11 +1,13 @@
 from PyQt5.QtWidgets import QMessageBox
 import configparser as cfg_parser
 
+VERBOSE = False
+DIR_CFG = "configs/"
     # global variables
-display_cfg_file = 'displays_cfgs/displays_config_F1.txt'
+display_cfg_file = DIR_CFG + 'displays_config_F1.txt'
     # constans
-INSTRUMENT_CFG_FILE = 'instruments_config.txt'
-
+INSTRUMENT_CFG_FILE = DIR_CFG + 'instruments_config.txt'
+ICON_FILE = 'icon.png'
 
 # =============================================================================
 # messagebox show message with OK button
@@ -54,4 +56,12 @@ def get_sections_cfg(file):
     config.read(file)
     return config.sections()
 
+
+# =============================================================================
+# Used withing the application to print text to terminal if VERBOSE is True
+# =============================================================================    
+
+def verbose(txt):
+    if VERBOSE == True:
+        print(txt)
 

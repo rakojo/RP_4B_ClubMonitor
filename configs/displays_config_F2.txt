@@ -1,0 +1,60 @@
+[display_26]
+instrument id = maxigauge_2
+channel = 6
+period = 250
+type = label
+units = [mbar]
+position = 1275, -24
+name size = 50
+value size = 100
+units size = 30
+value format = .2E
+style = background-color: black; color : red;
+opacity = 0.8
+
+[display_32]
+instrument id = xgs600_1
+channel = 1
+period = 250
+type = label
+units = [mbar]
+position = 36, -14
+name size = 50
+value size = 100
+units size = 30
+value format = .2E
+style = background-color: black; color : blue;
+opacity = 0.8
+
+[plot_1]
+instrument id = maxigauge_2
+channel = 6
+period = 250
+type = plot
+length = 250
+units = [mbar]
+name = QMS H
+position = 9, 231
+size = 1897, 400
+name style = {'color' : 'red', 'size': '45px'}
+axes style = {'color' : 'red', 'font-size': '45px'}
+pen style = {'color' : 'red', 'width': 5}
+background = black
+opacity = 0.8
+
+[plot_2]
+instrument id = xgs600_1
+channel = 1
+period = 250
+type = plot
+length = 250
+units = [mbar]
+name = OK1
+position = 9, 625
+size = 1897, 400
+name style = {'color' : 'blue', 'size': '45px'}
+axes style = {'color' : 'blue', 'font-size': '45px'}
+pen style = {'color' : 'blue', 'width': 5}
+background = black
+opacity = 0.8
+

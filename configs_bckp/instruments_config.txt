@@ -1,0 +1,35 @@
+[maxigauge_1]
+type = MaxiGaugeInst    # name of class used inside of the program to take care about instrument - contorler
+port = /dev/ttyUSB0		# linux RS232 port
+#port = COM3			# windows RS232 port
+period = 250            # reading rate in miliseconds (100 means 10 times per second)
+save average = 4        # average this number of measurements before it saves the value
+channels = 6            # number of channels
+channels names = OK1 L, OK2 L, STK L, SEL L, QMS L, IMG L
+value format = .3G      # used to save the values to log file
+dir = ../logs/         	# linux directory where to save the files for log data
+#dir = ..\logs\          # windows directory where to save the files for log data
+
+[maxigauge_2]
+type = MaxiGaugeInst    # name of class used inside of the program to take care about instrument - contorler
+port = /dev/ttyUSB2		# linux RS232 port
+#port = COM3			# windows RS232 port
+period = 250            # reading rate in miliseconds (100 means 10 times per second)
+save average = 4        # average this number of measurements before it saves the value
+channels = 6            # number of channels
+channels names = TOF H, -, -, -, -, QMS H
+value format = .3G      # used to save the values to log file
+dir = ../logs/         	# linux directory where to save the files for log data
+#dir = ..\logs\          # windows directory where to save the files for log data
+
+[xgs600_1]
+type = XGS600Inst       # name of class used inside of the program to take care about instrument - contorler
+port = /dev/ttyUSB1		# linux RS232 port
+#port = COM12			# windows RS232 port
+period = 250            # reading rate in miliseconds (100 means 10 times per second)
+save average = 4        # average this number of measurements before it saves the value
+channels = 2            # number of channels
+channels names = OK1 H, STK H
+value format = .3G      # used to save the values
+dir = ../logs/         	# linux directory where to save the files for log data
+#dir = ..\logs\          # windows directory where to save the files for log data

@@ -1,11 +1,16 @@
 import numpy as np
+
 from PfeifferVacuum import MaxiGauge
+from xgs600 import XGS600Driver
+
 import common as cmn
   
 from PyQt5.QtCore import QTimer
 
 from os.path import exists
 from datetime import datetime
+
+
 
 # =============================================================================
 # Class Buffer to colect instrument read values for averagin
@@ -23,7 +28,7 @@ class Buffer():
     def clear(self):
         self.buffer.fill(0)
         self.idx = 0
-
+        
     def insert(self, val):
             # clear automaticly when attend to save more values than buffer size is
         if self.is_full():
@@ -38,12 +43,15 @@ class Buffer():
     def get_current(self):
         return self.buffer[self.idx - 1]
     
-   
-# =============================================================================
-# Class MaxiGaugeInst - to comunicate with MaxiGauge instrument
-# =============================================================================    
 
-class MaxiGaugeInst():
+
+# =============================================================================
+# Class Inst - general class to comunicate with instruments instrument
+#
+#
+#  =============================================================================    
+
+class Inst():
     def __init__(self, instrument_id):
         self.instrument_id = instrument_id
         self.read_config()
@@ -52,12 +60,9 @@ class MaxiGaugeInst():
             # list is used to have the buffer for every channel separately    
         self.buffers = [Buffer(self.average) for x in range(self.num_channels)]    
                                                    
-        print("Connecting {}  to {}.".format(self.instrument_id, self.port))
-        self.mg = MaxiGauge(self.port)
-        self.read_values()
-        self.get_value
-        print(self.mg.pressures())
+        cmn.verbose("Connecting {}  to {}.".format(self.instrument_id, self.port))
 
+        self.new_header = True    # to make new header for log file whenever the instance is created - program re-run
         self.timer = QTimer()
         self.timer.timeout.connect(self.read_values)
         self.timer.start(self.period)                     # in miliseconds
@@ -72,22 +77,11 @@ class MaxiGaugeInst():
         self.period = int(cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE, self.instrument_id, 'period'))
         self.average = int(cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE, self.instrument_id, 'save average'))
         self.num_channels = int(cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE, self.instrument_id, 'channels'))
+        self.ch_names = tuple(str(x) for x in (cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE,
+                                               self.instrument_id, 'channels names').split(',')))
         self.value_format = str(cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE, self.instrument_id, 'value format'))
         self.dir = str(cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE, self.instrument_id, 'dir'))
 
-
-        """
-        read values from the MaxiGauge controler and stores them 
-        """
-    def read_values(self):
-        all_channels = self.mg.pressures()
-        for buff, channel in zip(self.buffers, all_channels):
-            buff.insert(channel.pressure)
-                # store the data is 'save average' number reached (= size of buffer)?
-                
-                # if ch 1 buffer is full => all buffers are full
-        if self.buffers[0].is_full():
-            self.write_to_file()
 
         """
         Function is used from outside of class to read stored pressure values 
@@ -98,19 +92,21 @@ class MaxiGaugeInst():
 
     def write_to_file(self):
         dt = datetime.now()
-        self.data_file = '{}_{}_{:2}_{}.txt'.format(dt.year, dt.month, dt.day, self.instrument_id)
+        self.data_file = '{}_{:02}_{:02}_{}.txt'.format(dt.year, dt.month, dt.day, self.instrument_id)
         
         txt = ''
-        if not exists(self.dir + self.data_file):
-                # make header of new file
-            txt += 'time\t'
+            # is it next day or just new program start? - make new header
+        if not exists(self.dir + self.data_file) or self.new_header:
+            self.new_header = False     # make new header when program starts only ones
+                # make header of new file or if this is first execution after program run
+            txt += '#time\t'            # every header strarts by #-character
             for channel in range(self.num_channels):
-                txt += 'CH' + format(channel+1)
+                txt += 'CH' + format(channel+1) + ' : ' + self.ch_names[channel]
                 if channel < self.num_channels - 1:
                     txt += '\t'
                 else:
                     txt += '\n'
-        print(self.dir + self.data_file)
+        cmn.verbose(self.dir + self.data_file)
         file=open(self.dir + self.data_file, 'a')
 
             # make a line with data values
@@ -124,7 +120,7 @@ class MaxiGaugeInst():
         file.write(txt)
         file.close()
 
-        
+
         """
         """
     def close(self):
@@ -132,6 +128,59 @@ class MaxiGaugeInst():
 
 
 
+# =============================================================================
+# Class MaxiGaugeInst - to comunicate with MaxiGauge instrument
+# =============================================================================    
+
+class MaxiGaugeInst(Inst):
+    def __init__(self, instrument_id):
+        super().__init__(instrument_id)
+
+        self.mg = MaxiGauge(self.port)
+        self.read_values()
+        
+
+        """
+        read values from the MaxiGauge controler and stores them 
+        """
+    def read_values(self):
+        all_channels = self.mg.pressures()
+        
+        for buff, channel in zip(self.buffers, all_channels):
+            buff.insert(channel.pressure)
+
+                # store the data is 'save average' number reached (= size of buffer)?
+                # if ch 1 buffer is full => all buffers are full
+        if self.buffers[0].is_full():
+            self.write_to_file()
+
+
+# =============================================================================
+# Class XGS600Inst - to comunicate with XGS600 instrument
+# =============================================================================    
+
+class XGS600Inst(Inst):
+    def __init__(self, instrument_id):
+        super().__init__(instrument_id)
+
+        self.xgs = XGS600Driver(self.port)
+        self.read_values()
+
+        """
+        read values from the XGS600Inst controler and stores them 
+        """
+    def read_values(self):
+        all_channels = self.xgs.read_all_pressures()
+        for buff, channel in zip(self.buffers, all_channels):
+            buff.insert(channel)
+
+                # store the data is 'save average' number reached (= size of buffer)?
+                # if ch 1 buffer is full => all buffers are full
+        if self.buffers[0].is_full():
+            self.write_to_file()
+
+
+        
 # =============================================================================
 # returning the class of the instrument based on 'type' par. from inst. config file
 # =============================================================================    

@@ -25,7 +25,8 @@ from instruments import get_instrument_class
 import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog
-from PyQt5.QtCore import QSize, QTimer, Qt
+from PyQt5.QtCore import QSize, QTimer, Qt, QEvent
+from PyQt5.QtGui import QIcon
 
 import common as cmn
 
@@ -37,20 +38,16 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon("icon.png"))
         self.setFixedSize(QSize(1920, 1080))
         self.move(0, 0)
 
         self.displays = []
-        # self.button = QPushButton("Push for Window")
-        # self.button.clicked.connect(self.change_label)
-        # self.setCentralWidget(self.button)
 
         self.init_instruments()
         self.open_displays(cmn.display_cfg_file)
-         
-            # set timer for reading instruments 
-            # note.: not display just read and store, display then get values from inst obj by itself
 
+        self.title_on = False
 
         """
         Get proper classes for instruments in configuration file and create instances
@@ -77,8 +74,8 @@ class MainWindow(QMainWindow):
         for disp_id in display_ids:
             inst_id = cmn.read_cfg(cfg_file, disp_id,     # get instrument id of the display
                                    'instrument id')  
-            win = diplay_window(disp_id, instruments[inst_id])  # pass the reference of the instrument object
-                                                                # to a display class init and show its window
+            win = diplay_window(self, disp_id, instruments[inst_id])  # pass the reference of the instrument object
+                                                                      # to a display class init and show its window
             win.show()
             self.displays.append(win)
 
@@ -93,40 +90,69 @@ class MainWindow(QMainWindow):
         self.displays.clear()      # claer list with all the references to display objects
 
 
-      
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_F10:
+        if event.key() == Qt.Key_F5:
+            self.title_on = False
             file_dialog = QFileDialog()
             file_dialog.setFileMode(QFileDialog.ExistingFiles)
             if file_dialog.exec_():
                 file_path = file_dialog.selectedFiles()[0]
                 self.close_displays()
-                print("Opend diplay config. file: {}".format(file_path))
+                cmn.verbose("Opend diplay config. file: {}".format(file_path))
                 self.open_displays(file_path)
 
         if event.key() == Qt.Key_F1:
-            file_path = 'displays_cfgs/displays_config_F1.txt'
+            self.title_on = False
+            file_path = cmn.DIR_CFG +'displays_config_F1.txt'
             self.close_displays()
-            print("Opend diplay config. file: {}".format(file_path))
+            cmn.verbose("Opend diplay config. file: {}".format(file_path))
             self.open_displays(file_path)
 
         if event.key() == Qt.Key_F2:
-            file_path = 'displays_cfgs/displays_config_F2.txt'
+            self.title_on = False
+            file_path = cmn.DIR_CFG + 'displays_config_F2.txt'
             self.close_displays()
-            print("Opend diplay config. file: {}".format(file_path))
+            cmn.verbose("Opend diplay config. file: {}".format(file_path))
             self.open_displays(file_path)
 
         if event.key() == Qt.Key_F3:
-            file_path = 'displays_cfgs/displays_config_F3.txt'
+            self.title_on = False
+            file_path = cmn.DIR_CFG + 'displays_config_F3.txt'
             self.close_displays()
-            print("Opend diplay config. file: {}".format(file_path))
+            cmn.verbose("Opend diplay config. file: {}".format(file_path))
             self.open_displays(file_path)
 
         if event.key() == Qt.Key_F4:
-            file_path = 'displays_cfgs/displays_config_F4.txt'
+            self.title_on = False
+            file_path = cmn.DIR_CFG + 'displays_config_F4.txt'
             self.close_displays()
-            print("Opend diplay config. file: {}".format(file_path))
+            cmn.verbose("Opend diplay config. file: {}".format(file_path))
             self.open_displays(file_path)
+
+        if event.key() == Qt.Key_F10:
+            if not self.title_on:
+                flag = Qt.WindowTitleHint | Qt.WindowCloseButtonHint |  Qt.WindowType.WindowStaysOnTopHint | Qt.Tool # show win. title bar
+                      
+            else:
+                flag = Qt.FramelessWindowHint |  Qt.WindowType.WindowStaysOnTopHint | Qt.Tool # hide win. title bar
+
+            for win in self.displays:
+                win.setWindowFlags(flag)                        
+                win.show()
+
+            self.title_on = not self.title_on     # toggle  
+
+
+        """Called when app window is minimalized, maximalized
+        """
+    def changeEvent(self, event):
+        if event.type() == QEvent.WindowStateChange:
+            if event.oldState() and Qt.WindowMinimized:
+                for win in self.displays:
+                    win.setWindowState(Qt.WindowActive)
+            elif event.oldState() == Qt.WindowNoState or self.windowState() == Qt.WindowMaximized:
+                for win in self.displays:
+                    win.setWindowState(Qt.WindowMinimized)
 
 
         """

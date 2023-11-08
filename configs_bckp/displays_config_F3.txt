@@ -1,0 +1,140 @@
+[display_11]
+instrument id = maxigauge_1
+channel = 1
+period = 250
+type = label
+units = [mbar]
+position = 2, 363
+name size = 10
+value size = 50
+units size = 10
+value format = .1E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_12]
+instrument id = maxigauge_1
+channel = 2
+period = 250
+type = label
+units = [mbar]
+position = 300, 184
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_13]
+instrument id = maxigauge_1
+channel = 3
+period = 250
+type = label
+units = [mbar]
+position = 552, 568
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_14]
+instrument id = maxigauge_1
+channel = 4
+period = 250
+type = label
+units = [mbar]
+position = 702, 119
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_15]
+instrument id = maxigauge_1
+channel = 5
+period = 250
+type = label
+units = [mbar]
+position = 1623, 357
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_16]
+instrument id = maxigauge_1
+channel = 6
+period = 250
+type = label
+units = [mbar]
+position = 1004, 72
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_21]
+instrument id = maxigauge_2
+channel = 1
+period = 250
+type = label
+units = [mbar]
+position = 1307, 24
+name size = 10
+value size = 50
+units size = 10
+value format = .2E
+style = background-color: grey; color : black;
+opacity = 0.8
+
+[display_26]
+instrument id = maxigauge_2
+channel = 6
+period = 250
+type = label
+units = [mbar]
+position = 1432, 479
+name size = 50
+value size = 100
+units size = 30
+value format = .1E
+style = background-color: black; color : red;
+opacity = 0.8
+
+[display_31]
+instrument id = xgs600_1
+channel = 1
+period = 250
+type = label
+units = [mbar]
+position = 0, 507
+name size = 50
+value size = 100
+units size = 30
+value format = .1E
+style = background-color: black; color : blue;
+opacity = 0.8
+
+[display_32]
+instrument id = xgs600_1
+channel = 2
+period = 250
+type = label
+units = [mbar]
+position = 552, 684
+name size = 50
+value size = 100
+units size = 30
+value format = .1E
+style = background-color: black; color : red;
+opacity = 0.8
+

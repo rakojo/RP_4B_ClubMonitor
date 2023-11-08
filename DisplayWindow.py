@@ -1,6 +1,6 @@
 from PyQt5 import QtGui
 
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QHBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QHBoxLayout, QGridLayout, QSplashScreen, QToolTip
 from PyQt5.QtCore import Qt, QTimer, QSize
 
 import pyqtgraph as pg
@@ -14,14 +14,14 @@ import common as cmn
 # function DisplayWindow select proper class to show the display window
 # and returns its instance.
 # =============================================================================    
-def diplay_window(display_id, obj_instrument,):
+def diplay_window(parent, display_id, obj_instrument,):
         # type of classes for display windows
     display_types = {'label' : LabelDisplay,
                      'plot'  : PlotDisplay}
 
     type =  str(cmn.read_cfg(cmn.display_cfg_file, display_id, 'type'))
 
-    return display_types[type](display_id, obj_instrument)
+    return display_types[type](parent, display_id, obj_instrument)
 
 
 
@@ -36,15 +36,19 @@ class Display(QWidget):
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
     """
-    def __init__(self, display_id, obj_instrument):
+    def __init__(self, parent, display_id, obj_instrument):
         super().__init__()
-        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint)      # Remove window frame
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint) # to be on the top above all windows
+            # frameless window to be on the top above all windows
+        self.parent = parent
+        self.setWindowFlags(Qt.Tool)
+        self.setWindowFlag(Qt.FramelessWindowHint) 
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint) 
+
         self.display_id = display_id                  # string for identification in cfg file 
         self.get_value = obj_instrument.get_value     # reference to function returning values to display
         self.read_config()                            # read position, fond size ... from cfg file
         
-        title = self.instrument_id + ' | CH' + str(self.channel)
+        title = self.instrument_id + ' | CH' + str(self.channel) + ' | ' + self.name
         self.setWindowTitle(title)
 
         self.move(self.position[0], self.position[1])
@@ -57,6 +61,7 @@ class Display(QWidget):
         self.timer.timeout.connect(self.update_display)
         self.timer.start(self.period)                              # 1000 milliseconds = 1 second
 
+ 
 
         """
         Creates GUI layout of the diplay window
@@ -69,18 +74,20 @@ class Display(QWidget):
         """
     def read_config(self):
         df = cmn.display_cfg_file
-        print("Display configuration file name: {}".format(df))
+        cmn.verbose("Display configuration file name: {}".format(df))
         self.instrument_id = str(cmn.read_cfg(df, self.display_id, 'instrument id'))
-        self.name =          str(cmn.read_cfg(df, self.display_id, 'name'))
         self.channel =       int(cmn.read_cfg(df, self.display_id, 'channel'))
+        self.name =          tuple(str(x) for x in (cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE,
+                                                    self.instrument_id, 'channels names').split(',')))[self.channel-1]
         self.period =        int(cmn.read_cfg(df, self.display_id, 'period'))
         self.units =         str(cmn.read_cfg(df, self.display_id, 'units'))
         self.position =      tuple(int(x) for x in (cmn.read_cfg(df, self.display_id, 'position').split(',')))
         self.opacity =       float(cmn.read_cfg(df, self.display_id, 'opacity'))
 
 
+
     def write_config(self):
-        print("Writing to file {} section {}".format(cmn.display_cfg_file, self.display_id))
+        cmn.verbose("Writing to file {} section {}".format(cmn.display_cfg_file, self.display_id))
             # save window position
         cmn.write_cfg(cmn.display_cfg_file, self.display_id, 'position', 
                       str(self.position[0]) + ', ' + str(self.position[1]))
@@ -90,7 +97,7 @@ class Display(QWidget):
         function run when display window is closed
         """
     def closeEvent(self, event):
-        print("Closing {}!".format(self.name))
+        cmn.verbose("Closing {}!".format(self.name))
         self.write_config()
         self.timer.stop()                                   # stop the timer for display update
 
@@ -110,10 +117,7 @@ class Display(QWidget):
 
 
     def keyPressEvent(self, event):
-        # if event.key() == Qt.Key_F1:
-        #     print("F1 pressed ...")
-        event.ignore()
-    
+        self.parent.keyPressEvent(event)
 
 # =============================================================================
 # Class LabelDisplay 
@@ -121,8 +125,8 @@ class Display(QWidget):
 # =============================================================================    
 
 class LabelDisplay(Display):
-    def __init__(self, display_id, obj_instrument):
-        super().__init__(display_id, obj_instrument)
+    def __init__(self, parent, display_id, obj_instrument):
+        super().__init__(parent, display_id, obj_instrument)
 
 
         """
@@ -179,10 +183,10 @@ class LabelDisplay(Display):
 # =============================================================================    
 
 class PlotDisplay(Display):
-    def __init__(self, display_id, obj_instrument):
-        super().__init__(display_id, obj_instrument)
-        self.resize(QSize(self.win_size[0], self.win_size[1]))
-
+    def __init__(self, parent, display_id, obj_instrument):
+        super().__init__(parent, display_id, obj_instrument)
+       
+        self.resize(self.win_size[0], self.win_size[1])
 
         """
         Creates GUI layout of the diplay window
@@ -222,12 +226,11 @@ class PlotDisplay(Display):
         self.length =        int(cmn.read_cfg(df, self.display_id, 'length'))
         self.win_size =      tuple(int(x) for x in (cmn.read_cfg(df, self.display_id, 'size').split(',')))
 
-
     def write_config(self):
         super().write_config()
             # save window size
         cmn.write_cfg(cmn.display_cfg_file, self.display_id, 'size', 
-                      str(self.win_size[0]) + ', ' + str(self.win_size[1]))
+                      str(self.size().width()) + ', ' + str(self.size().height()))
 
         """
         Function reads value from instrument class and displays it in the window
@@ -249,11 +252,5 @@ class PlotDisplay(Display):
 
         self.line.setData(self.x, self.y)   # Update the data.
 
-
-        """
-        Update current window size
-        """    
-    def resizeEvent(self, event):
-        self.win_size = (self.size().width(), self.size().height())        # update current position
 
  
