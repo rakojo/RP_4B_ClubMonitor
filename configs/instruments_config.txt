@@ -33,3 +33,16 @@ channels names = OK1 H, STK H
 value format = .3G      # used to save the values
 dir = ../logs/         	# linux directory where to save the files for log data
 #dir = ..\logs\          # windows directory where to save the files for log data
+
+[MCC118_1]              # this is analog-to-digital converter
+type = MCC118Inst       # name of class used inside of the program to take care about instrument - contorler
+port = -		        # it is RP HAT not RS232 device
+period = 250            # reading rate in miliseconds (100 means 10 times per second)
+save average = 4        # average this number of measurements before it saves the value
+channels = 8            # number of channels
+channels names = IMG H, CH 1, CH 2, CH 3, CH 4, CH 5, CH 6, CH 7 
+expression = 10**(x-11), x, x, x, x, x, x, x  # each channel conversion function - recalculation of mesured voltage to e.g.pressure, 'x' means identity (no conversion)
+						# ranges: 10 mA: 10**(x-12), 1 mA: 10**(x-11), 0.1 mA: 10**(x-10)
+value format = .3G      # used to save the values
+dir = ../logs/          # linux directory where to save the files for log data
+#dir = ..\logs\          # windows directory where to save the files for log data

@@ -10,6 +10,10 @@ from PyQt5.QtCore import QTimer
 from os.path import exists
 from datetime import datetime
 
+from daqhats import mcc118, OptionFlags, HatIDs, HatError
+from daqhats_utils import select_hat_device, enum_mask_to_string, chan_list_to_mask
+
+
 
 
 # =============================================================================
@@ -181,6 +185,103 @@ class XGS600Inst(Inst):
 
 
         
+# =============================================================================
+# Class MCC118 - to comunicate with ADC HAT of RP (Raspery Pi 8 channel ADC)
+# =============================================================================    
+# Install library to RP to be able to work !
+# ********************************
+# Installing and Using the Library
+# ********************************
+
+# The project is hosted at https://github.com/mccdaq/daqhats.
+
+# Installation
+# ************
+
+# 1. Power off the Raspberry Pi then attach one or more HAT boards (see :ref:`install`).
+# 2. Power on the Pi and log in.  Open a terminal window if using the graphical interface.
+# 3. Update your package list::
+
+    # sudo apt update
+    
+# 4. **Optional:** Update your installed packages and reboot::
+   
+    # sudo apt full-upgrade
+    # sudo reboot
+    
+# 5. Install git (if not installed)::
+
+    # sudo apt install git
+    
+# 6. Download this package to your user folder with git::
+
+    # cd ~
+    # git clone https://github.com/mccdaq/daqhats.git
+    
+# 7. Build and install the shared library and optional Python support.  The installer will ask if you want to install Python 2 and Python 3 support.  It will also detect the HAT board EEPROMs and save the contents if needed::
+
+    # cd ~/daqhats
+    # sudo ./install.sh
+
+class MCC118Inst(Inst):
+    def __init__(self, instrument_id):
+        super().__init__(instrument_id)
+
+        self.channels = [0, 1, 2, 3, 4, 5, 6, 7]
+        self.channel_mask = chan_list_to_mask(self.channels)
+        self.num_channels = len(self.channels)
+
+        self.samples_per_channel = 100
+        self.scan_rate = 1000.0
+        self.options = OptionFlags.DEFAULT
+
+        address = select_hat_device(HatIDs.MCC_118)
+        self.hat = mcc118(address)
+
+        self.read_values()
+
+
+    def read_config(self):
+
+        super().read_config()
+        self.expression = tuple(str(x) for x in (cmn.read_cfg(cmn.INSTRUMENT_CFG_FILE,
+                                self.instrument_id, 'expression').split(',')))
+
+
+        """
+        read values from the ADC_mcc118 controler and stores them 
+        """
+    def read_values(self):
+        # Read a single value from each selected channel.
+        all_channels = []
+        self.hat.a_in_scan_start(self.channel_mask, self.samples_per_channel, self.scan_rate,
+                                 self.options)
+
+        timeout = 5
+        read_request_size = 800
+        read_result = self.hat.a_in_scan_read(read_request_size, timeout)
+
+        data = np.array(read_result.data)
+
+        for chan in range(8):
+                # average to get single value and get rid of tooth signal noise 
+                # of the analog output of the pressure gauge
+            x = np.average(data[chan::self.num_channels])
+                #recalculate voltage to pressure by expression from inst. cfg. file
+            val = eval(self.expression[chan])    # use string expression to evaluate
+            all_channels.append(val)
+
+        self.hat.a_in_scan_cleanup()
+
+        for buff, channel in zip(self.buffers, all_channels):
+            buff.insert(channel)
+
+                # store the data is 'save average' number reached (= size of buffer)?
+                # if ch 1 buffer is full => all buffers are full
+        if self.buffers[0].is_full():
+            self.write_to_file()
+
+
 # =============================================================================
 # returning the class of the instrument based on 'type' par. from inst. config file
 # =============================================================================    

@@ -1,0 +1,47 @@
+[display_41]
+instrument id = MCC118_1
+channel = 1
+period = 250
+type = label
+units = [mbar]
+position = 1376, 23
+name size = 50
+value size = 100
+units size = 30
+value format = .1E
+style = background-color: black; color : red;
+opacity = 0.8
+size = 1680, 579
+
+[plot_1]
+instrument id = MCC118_1
+channel = 1
+period = 250
+type = plot
+length = 250
+units = [mbar] 
+name = VMI H
+position = 0, 231
+size = 1680, 400
+name style = {'color' : 'red', 'size': '45px'}
+axes style = {'color' : 'red', 'font-size': '45px'}
+pen style = {'color' : 'red', 'width': 5}
+background = black
+opacity = 0.9
+
+[plot_2]
+instrument id = MCC118_1
+channel = 2
+period = 250
+type = plot
+length = 250
+units = [mbar]
+name = VMI H grnd
+position = 7, 578
+size = 1680, 400
+name style = {'color' : 'red', 'size': '45px'}
+axes style = {'color' : 'red', 'font-size': '45px'}
+pen style = {'color' : 'red', 'width': 5}
+background = black
+opacity = 0.9
+
