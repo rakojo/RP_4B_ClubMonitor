@@ -23,7 +23,7 @@ name size = 50
 value size = 100
 units size = 30
 value format = .2E
-style = background-color: black; color : blue;
+style = background-color: black; color : cyan;
 opacity = 0.8
 
 [plot_1]
@@ -52,9 +52,9 @@ units = [mbar]
 name = OK1
 position = 0, 625
 size = 1680, 400
-name style = {'color' : 'blue', 'size': '45px'}
-axes style = {'color' : 'blue', 'font-size': '45px'}
-pen style = {'color' : 'blue', 'width': 5}
+name style = {'color' : 'cyan', 'size': '45px'}
+axes style = {'color' : 'cyan', 'font-size': '45px'}
+pen style = {'color' : 'cyan', 'width': 5}
 background = black
 opacity = 0.9
 
