@@ -8,6 +8,7 @@ import common as cmn
 from PyQt5.QtCore import QTimer
 
 from os.path import exists
+from os import remove as remove_file
 from datetime import datetime
 
 from daqhats import mcc118, OptionFlags, HatIDs, HatError
@@ -123,6 +124,11 @@ class Inst():
                 txt += '\n'
         file.write(txt)
         file.close()
+
+            # delete 1 year old file if it exists
+        old_file = '{}_{:02}_{:02}_{}.txt'.format(dt.year-1, dt.month, dt.day, self.instrument_id)
+        if exists(old_file):
+            remove_file(old_file)
 
 
         """
