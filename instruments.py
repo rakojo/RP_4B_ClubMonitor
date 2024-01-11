@@ -127,10 +127,9 @@ class Inst():
 
             # delete 1 year old file if it exists
         old_file = '{}_{:02}_{:02}_{}.txt'.format(dt.year-1, dt.month, dt.day, self.instrument_id)
-        if exists(old_file):
-            remove_file(old_file)
-
-
+        if exists(self.dir + old_file):
+            remove_file(self.dir + old_file)
+            
         """
         """
     def close(self):
