@@ -60,9 +60,14 @@ class Inst():
     def __init__(self, instrument_id):
         self.instrument_id = instrument_id
         self.read_config()
-
-            # list of buffers for colletion of the values before saving them
-            # list is used to have the buffer for every channel separately    
+        
+        # state of the connection tu the instrument False = not connected
+        # if not connected program starts with an error message but then contiuus
+        # with the not connected instrument reading all the values as -1
+        self.connected = False
+            
+        # list of buffers for colletion of the values before saving them
+        # the type list is used to have the buffer for every channel separately    
         self.buffers = [Buffer(self.average) for x in range(self.num_channels)]    
                                                    
         cmn.verbose("Connecting {}  to {}.".format(self.instrument_id, self.port))
@@ -145,7 +150,12 @@ class MaxiGaugeInst(Inst):
     def __init__(self, instrument_id):
         super().__init__(instrument_id)
 
-        self.mg = MaxiGauge(self.port)
+        try:
+            self.mg = MaxiGauge(self.port)
+            self.connected = True
+        except:
+            self.connected = False
+        
         self.read_values()
         
 
@@ -153,10 +163,13 @@ class MaxiGaugeInst(Inst):
         read values from the MaxiGauge controler and stores them 
         """
     def read_values(self):
-        all_channels = self.mg.pressures()
+        if self.connected:
+            all_channels = [ch.pressure for ch in self.mg.pressures()]
+        else:
+            all_channels = [-1]*self.num_channels
         
         for buff, channel in zip(self.buffers, all_channels):
-            buff.insert(channel.pressure)
+            buff.insert(channel)
 
                 # store the data is 'save average' number reached (= size of buffer)?
                 # if ch 1 buffer is full => all buffers are full
@@ -172,14 +185,23 @@ class XGS600Inst(Inst):
     def __init__(self, instrument_id):
         super().__init__(instrument_id)
 
-        self.xgs = XGS600Driver(self.port)
+        try:
+            self.xgs = XGS600Driver(self.port)
+            self.connected = True
+        except:
+            self.connected = False
+
         self.read_values()
 
         """
         read values from the XGS600Inst controler and stores them 
         """
     def read_values(self):
-        all_channels = self.xgs.read_all_pressures()
+        if self.connected:
+            all_channels = self.xgs.read_all_pressures()
+        else:
+            all_channels = [-1]*self.num_channels
+
         for buff, channel in zip(self.buffers, all_channels):
             buff.insert(channel)
 
@@ -240,8 +262,13 @@ class MCC118Inst(Inst):
         self.scan_rate = 1000.0
         self.options = OptionFlags.DEFAULT
 
-        address = select_hat_device(HatIDs.MCC_118)
-        self.hat = mcc118(address)
+        try:
+            address = select_hat_device(HatIDs.MCC_118)
+            self.hat = mcc118(address)
+            self.connected = True
+        except:
+            self.connected = False
+            
 
         self.read_values()
 
@@ -257,27 +284,30 @@ class MCC118Inst(Inst):
         read values from the ADC_mcc118 controler and stores them 
         """
     def read_values(self):
-        # Read a single value from each selected channel.
-        all_channels = []
-        self.hat.a_in_scan_start(self.channel_mask, self.samples_per_channel, self.scan_rate,
-                                 self.options)
+        if self.connected:
+            # Read a single value from each selected channel.
+            all_channels = []
+            self.hat.a_in_scan_start(self.channel_mask, self.samples_per_channel, self.scan_rate,
+                                    self.options)
 
-        timeout = 5
-        read_request_size = 800
-        read_result = self.hat.a_in_scan_read(read_request_size, timeout)
+            timeout = 5
+            read_request_size = 800
+            read_result = self.hat.a_in_scan_read(read_request_size, timeout)
 
-        data = np.array(read_result.data)
+            data = np.array(read_result.data)
 
-        for chan in range(8):
-                # average to get single value and get rid of tooth signal noise 
-                # of the analog output of the pressure gauge
-            x = np.average(data[chan::self.num_channels])
-                #recalculate voltage to pressure by expression from inst. cfg. file
-            val = eval(self.expression[chan])    # use string expression to evaluate
-            all_channels.append(val)
+            for chan in range(self.num_channels):
+                    # average to get single value and get rid of tooth signal noise 
+                    # of the analog output of the pressure gauge
+                x = np.average(data[chan::self.num_channels])
+                    #recalculate voltage to pressure by expression from inst. cfg. file
+                val = eval(self.expression[chan])    # use string expression to evaluate
+                all_channels.append(val)
 
-        self.hat.a_in_scan_cleanup()
+            self.hat.a_in_scan_cleanup()
 
+        else:
+            all_channels = [-1]*self.num_channels
         for buff, channel in zip(self.buffers, all_channels):
             buff.insert(channel)
 
